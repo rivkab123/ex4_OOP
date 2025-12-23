@@ -1,0 +1,60 @@
+package pepse.world.daynight;
+
+import danogl.GameObject;
+import danogl.components.CoordinateSpace;
+import danogl.components.Transition;
+import danogl.gui.rendering.OvalRenderable;
+import danogl.util.Vector2;
+import pepse.world.Terrain;
+
+import java.awt.*;
+
+import static danogl.components.Transition.TransitionType.TRANSITION_LOOP;
+
+public class Sun {
+
+    private static final float SUN_HEIGHT_RATIO = 0.2f;
+    private static final float SUN_INITIAL_Y_RATIO  = 2f / 3f;
+    private static final float SUN_INITIAL_X_RATIO = 0.5f;
+    private static final float FULL_CIRCLE_DEGREES = 360f;
+    private static final float INITIAL_DEGREES = 0f;
+
+
+    public static GameObject create(Vector2 windowDimensions, float cycleLength) {
+
+        OvalRenderable renderable = new OvalRenderable(Color.YELLOW);
+
+        float sunSize = windowDimensions.y() * 0.15f;
+        Vector2 sunDimensions = new Vector2(sunSize, sunSize);
+
+        Vector2 initialSunCenter = new Vector2(windowDimensions.x() / 2, windowDimensions.y() * SUN_HEIGHT_RATIO);
+
+        GameObject sun = new GameObject(
+                initialSunCenter.subtract(sunDimensions.mult(0.5f)),
+                sunDimensions,
+                renderable);
+
+        sun.setCoordinateSpace(CoordinateSpace.CAMERA_COORDINATES);
+        sun.setTag("sun");
+
+        // TODO use constant in terrain?
+        float cycleCenterY = windowDimensions.y() * SUN_INITIAL_Y_RATIO;
+        float cycleCenterX = windowDimensions.x() * SUN_INITIAL_X_RATIO;
+        Vector2 cycleCenter = new Vector2(cycleCenterX, cycleCenterY);
+
+        new Transition<Float>(
+                sun,
+                (Float angle) -> sun.setCenter(initialSunCenter.subtract(cycleCenter)
+                        .rotated(angle)
+                        .add(cycleCenter)),
+                INITIAL_DEGREES,
+                FULL_CIRCLE_DEGREES,
+                Transition.LINEAR_INTERPOLATOR_FLOAT,
+                cycleLength,
+                TRANSITION_LOOP,
+                null);
+        return sun;
+    }
+
+
+}
