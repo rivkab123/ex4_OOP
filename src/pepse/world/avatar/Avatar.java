@@ -5,8 +5,6 @@ import danogl.collisions.Collision;
 import danogl.gui.ImageReader;
 import danogl.gui.UserInputListener;
 import danogl.gui.rendering.AnimationRenderable;
-import danogl.gui.rendering.Camera;
-import danogl.gui.rendering.Renderable;
 import danogl.util.Vector2;
 
 
@@ -42,6 +40,7 @@ public class Avatar extends GameObject{
             "assets/jump_0.png", "assets/jump_1.png", "assets/jump_2.png", "assets/jump_3.png"
     };
     private static final String GROUND_SURFACE_TAG = "top_block";
+    public static final String FRUIT_TAG = "fruit";
     private boolean onGround;
 
 
@@ -96,7 +95,7 @@ public class Avatar extends GameObject{
             this.transform().setVelocityY(0);
         }
 
-        if("fruit".equals(other.getTag())){
+        if(FRUIT_TAG.equals(other.getTag())){
             ((pepse.world.trees.Fruit) other).disappear(); // safe casting
             energy += ENERGY_FRUIT_BONUS;
         }

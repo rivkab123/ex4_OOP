@@ -39,8 +39,12 @@ public class Tree {
     private static final float LEAF_DENSITY = 0.70f;
     private static final float FRUIT_DENSITY = 0.10f;     // fruits are rarer than leaves
 
+    public static final float LEAF_SIZE_FACTOR = 0.8f;
+    public static final float HALF_FACTOR = 0.5f;
+
     // ---- Colors ----
     private static final Color TRUNK_COLOR = new Color(100, 50, 20);
+
 
     // ---- Parts ----
     private final GameObject trunk;
@@ -57,7 +61,7 @@ public class Tree {
     }
 
     private GameObject createTrunk(Vector2 groundTopLeft, int trunkWidth, int trunkHeight) {
-        Vector2 trunkTopLeft = groundTopLeft.subtract(new Vector2(trunkWidth / 2f, trunkHeight));
+        Vector2 trunkTopLeft = groundTopLeft.subtract(new Vector2(trunkWidth * HALF_FACTOR, trunkHeight));
 
         GameObject trunk = new GameObject(
                 trunkTopLeft,
@@ -75,16 +79,16 @@ public class Tree {
         Vector2 trunkDim = trunk.getDimensions();
 
         // top-center of trunk
-        Vector2 trunkTopCenter = trunkTopLeft.add(new Vector2(trunkDim.x() / 2f, 0f));
+        Vector2 trunkTopCenter = trunkTopLeft.add(new Vector2(trunkDim.x() * HALF_FACTOR, 0f));
 
         int canopySize = 2 * canopyHalfSizePx;
-        Vector2 canopyTopLeft = trunkTopCenter.subtract(new Vector2(canopySize / 2f, canopySize / 2f));
+        Vector2 canopyTopLeft = trunkTopCenter.subtract(new Vector2(canopySize * HALF_FACTOR, canopySize * HALF_FACTOR));
 
         int cols = canopySize / LEAF_SIZE;
         int rows = canopySize / LEAF_SIZE;
 
         Vector2 leafSize = new Vector2(LEAF_SIZE, LEAF_SIZE);
-        Vector2 fruitSize = leafSize.mult(0.8f); // <= leaf size (requirement)
+        Vector2 fruitSize = leafSize.mult(LEAF_SIZE_FACTOR); // <= leaf size (requirement)
 
         for (int i = 0; i < cols; i++) {
             for (int j = 0; j < rows; j++) {
@@ -97,7 +101,7 @@ public class Tree {
 
                 if (RANDOM.nextFloat() <= FRUIT_DENSITY) {
                     // center fruit within the leaf cell
-                    Vector2 fruitTopLeft = cellTopLeft.add(leafSize.subtract(fruitSize).mult(0.5f));
+                    Vector2 fruitTopLeft = cellTopLeft.add(leafSize.subtract(fruitSize).mult(HALF_FACTOR));
                     Fruit fruit = new Fruit(fruitTopLeft, fruitSize);
                     fruits.add(fruit);
                 }
