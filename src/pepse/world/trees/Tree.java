@@ -1,0 +1,126 @@
+// ========================= Tree.java =========================
+package pepse.world.trees;
+
+import danogl.GameObject;
+import danogl.components.GameObjectPhysics;
+import danogl.gui.rendering.RectangleRenderable;
+import danogl.util.Vector2;
+
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+/**
+ * A simple Tree that creates:
+ * - trunk (rectangle)
+ * - leaves (Leaf objects)
+ * - fruits (Fruit objects)
+ *
+ * NOTE: The 4-color palette is used for FRUITS (not leaves).
+ * Leaves are green with optional noise + animation inside Leaf class.
+ */
+// TODO prevent the avatar from passing trees freely
+public class Tree {
+
+    private static final Random RANDOM = new Random();
+
+    // ---- Trunk constraints (pixels) ----
+    private static final int TRUNK_MIN_HEIGHT = 150;
+    private static final int TRUNK_MAX_HEIGHT = 350;
+    private static final int TRUNK_MIN_WIDTH  = 50;
+    private static final int TRUNK_MAX_WIDTH  = 80;
+
+    // ---- Canopy / Leaves (pixels) ----
+    private static final int LEAF_SIZE = 20;              // each leaf is 20x20 (you set this)
+    private static final int CANOPY_MIN_HALF_SIZE = 100;  // half-size of square canopy
+    private static final int CANOPY_MAX_HALF_SIZE = 150;
+
+    private static final float LEAF_DENSITY = 0.70f;
+    private static final float FRUIT_DENSITY = 0.10f;     // fruits are rarer than leaves
+
+    // ---- Colors ----
+    private static final Color TRUNK_COLOR = new Color(100, 50, 20);
+
+    // ---- Parts ----
+    private final GameObject trunk;
+    private final List<Leaf> leaves = new ArrayList<>();
+    private final List<Fruit> fruits = new ArrayList<>();
+
+    public Tree(Vector2 groundTopLeft) {
+        int trunkHeight = randInt(TRUNK_MIN_HEIGHT, TRUNK_MAX_HEIGHT);
+        int trunkWidth  = randInt(TRUNK_MIN_WIDTH, TRUNK_MAX_WIDTH);
+        int canopyHalf  = randInt(CANOPY_MIN_HALF_SIZE, CANOPY_MAX_HALF_SIZE);
+
+        this.trunk = createTrunk(groundTopLeft, trunkWidth, trunkHeight);
+        createLeavesAndFruits(canopyHalf);
+    }
+
+    private GameObject createTrunk(Vector2 groundTopLeft, int trunkWidth, int trunkHeight) {
+        Vector2 trunkTopLeft = groundTopLeft.subtract(new Vector2(trunkWidth / 2f, trunkHeight));
+
+        GameObject trunk = new GameObject(
+                trunkTopLeft,
+                new Vector2(trunkWidth, trunkHeight),
+                new RectangleRenderable(TRUNK_COLOR)
+        );
+
+        trunk.physics().preventIntersectionsFromDirection(Vector2.ZERO);
+        trunk.physics().setMass(GameObjectPhysics.IMMOVABLE_MASS);
+        return trunk;
+    }
+
+    private void createLeavesAndFruits(int canopyHalfSizePx) {
+        Vector2 trunkTopLeft = trunk.getTopLeftCorner();
+        Vector2 trunkDim = trunk.getDimensions();
+
+        // top-center of trunk
+        Vector2 trunkTopCenter = trunkTopLeft.add(new Vector2(trunkDim.x() / 2f, 0f));
+
+        int canopySize = 2 * canopyHalfSizePx;
+        Vector2 canopyTopLeft = trunkTopCenter.subtract(new Vector2(canopySize / 2f, canopySize / 2f));
+
+        int cols = canopySize / LEAF_SIZE;
+        int rows = canopySize / LEAF_SIZE;
+
+        Vector2 leafSize = new Vector2(LEAF_SIZE, LEAF_SIZE);
+        Vector2 fruitSize = leafSize.mult(0.8f); // <= leaf size (requirement)
+
+        for (int i = 0; i < cols; i++) {
+            for (int j = 0; j < rows; j++) {
+                Vector2 cellTopLeft = canopyTopLeft.add(new Vector2(i * LEAF_SIZE, j * LEAF_SIZE));
+
+                if (RANDOM.nextFloat() <= LEAF_DENSITY) {
+                    Leaf leaf = new Leaf(cellTopLeft, leafSize);
+                    leaves.add(leaf);
+                }
+
+                if (RANDOM.nextFloat() <= FRUIT_DENSITY) {
+                    // center fruit within the leaf cell
+                    Vector2 fruitTopLeft = cellTopLeft.add(leafSize.subtract(fruitSize).mult(0.5f));
+                    Fruit fruit = new Fruit(fruitTopLeft, fruitSize);
+                    fruits.add(fruit);
+                }
+
+            }
+        }
+    }
+
+    // inclusive
+    private static int randInt(int min, int max) {
+        return min + RANDOM.nextInt(max - min + 1);
+    }
+
+    // ===== Getters =====
+    public GameObject getTreeBase() {
+        return trunk;
+    }
+
+    public List<Leaf> getTreeLeaves() {
+        return leaves;
+    }
+
+    public List<Fruit> getFruits() {
+        return fruits;
+    }
+}

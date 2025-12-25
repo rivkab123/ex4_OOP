@@ -1,0 +1,99 @@
+// ========================= Leaf.java =========================
+package pepse.world.trees;
+
+import danogl.GameObject;
+import danogl.components.ScheduledTask;
+import danogl.components.Transition;
+import danogl.gui.rendering.RectangleRenderable;
+import danogl.util.Vector2;
+
+import java.awt.Color;
+import java.util.Random;
+
+/**
+ * Leaf is responsible for:
+ * - choosing its own (green) color + noise
+ * - running its own wind animation (angle + size)
+ *
+ * IMPORTANT: The 4-color palette is NOT here (those are FRUIT colors).
+ */
+public class Leaf extends GameObject {
+
+    private static final Random RANDOM = new Random();
+
+    // ---- Leaf color (green) ----
+    private static final Color LEAF_BASE_COLOR = new Color(50, 200, 30);
+    private static final int LEAF_COLOR_NOISE = 25;
+    private static final int HIGHEST_CHANNEL_VAL = 255;
+
+    // ---- Animation constants ----
+    private static final int LEAF_ANGLE_MIN_DEG = 15;
+    private static final int LEAF_ANGLE_MAX_DEG = 60;
+
+    private static final float LEAF_START_DELAY_MAX = 0.6f;
+
+    private static final float LEAF_ANGLE_DUR_MIN = 1.0f;
+    private static final float LEAF_ANGLE_DUR_RANGE = 1.5f;
+
+    private static final float LEAF_SCALE_MIN_BASE = 0.90f;
+    private static final float LEAF_SCALE_MIN_RANGE = 0.05f;
+    private static final float LEAF_SCALE_MAX_BASE = 1.05f;
+    private static final float LEAF_SCALE_MAX_RANGE = 0.07f;
+
+    private static final float LEAF_SIZE_DUR_MIN = 1.2f;
+    private static final float LEAF_SIZE_DUR_RANGE = 2.0f;
+
+    public Leaf(Vector2 topLeft, Vector2 size) {
+        super(topLeft, size, new RectangleRenderable(addRgbNoise(LEAF_BASE_COLOR, LEAF_COLOR_NOISE)));
+        animate(size);
+    }
+
+    private void animate(Vector2 baseSize) {
+        final float startDelay = RANDOM.nextFloat() * LEAF_START_DELAY_MAX;
+
+        final float maxAngle = randInt(LEAF_ANGLE_MIN_DEG, LEAF_ANGLE_MAX_DEG);
+        final float angleDuration = LEAF_ANGLE_DUR_MIN + RANDOM.nextFloat() * LEAF_ANGLE_DUR_RANGE;
+
+        final float minScale = LEAF_SCALE_MIN_BASE + RANDOM.nextFloat() * LEAF_SCALE_MIN_RANGE;
+        final float maxScale = LEAF_SCALE_MAX_BASE + RANDOM.nextFloat() * LEAF_SCALE_MAX_RANGE;
+        final float sizeDuration = LEAF_SIZE_DUR_MIN + RANDOM.nextFloat() * LEAF_SIZE_DUR_RANGE;
+
+        new ScheduledTask(this, startDelay, false, () -> {
+            new Transition<>(
+                    this,
+                    angle -> renderer().setRenderableAngle(angle),
+                    -maxAngle, +maxAngle,
+                    Transition.CUBIC_INTERPOLATOR_FLOAT,
+                    angleDuration,
+                    Transition.TransitionType.TRANSITION_BACK_AND_FORTH,
+                    null
+            );
+
+            new Transition<>(
+                    this,
+                    scale -> setDimensions(baseSize.mult(scale)),
+                    minScale, maxScale,
+                    Transition.CUBIC_INTERPOLATOR_FLOAT,
+                    sizeDuration,
+                    Transition.TransitionType.TRANSITION_BACK_AND_FORTH,
+                    null
+            );
+        });
+    }
+
+    private static Color addRgbNoise(Color base, int noise) {
+        int r = clamp255(base.getRed()   + randInt(-noise, noise));
+        int g = clamp255(base.getGreen() + randInt(-noise, noise));
+        int b = clamp255(base.getBlue()  + randInt(-noise, noise));
+        return new Color(r, g, b);
+    }
+
+    private static int clamp255(int v) {
+        return Math.max(0, Math.min(HIGHEST_CHANNEL_VAL, v));
+    }
+
+    // inclusive
+    private static int randInt(int min, int max) {
+        return min + RANDOM.nextInt(max - min + 1);
+    }
+}

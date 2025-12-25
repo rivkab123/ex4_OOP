@@ -31,25 +31,25 @@ public class Terrain {
     }
 
     public List<Block> createInRange(int minX, int maxX) {
-        RectangleRenderable rectangleRenderable = new RectangleRenderable(ColorSupplier.approximateColor(
-                BASE_GROUND_COLOR));
+        RectangleRenderable rectangleRenderable =
+                new RectangleRenderable(ColorSupplier.approximateColor(BASE_GROUND_COLOR));
 
         List<Block> blocks = new ArrayList<>();
-        int firstX = (int)Math.floor((float)minX / Block.SIZE) * Block.SIZE;
+
+        int firstX = (int) Math.floor((float) minX / Block.SIZE) * Block.SIZE;
+        int yEnd = (int) windowDimensions.y() + TERRAIN_DEPTH * Block.SIZE;
 
         for (int x = firstX; x < maxX; x += Block.SIZE) {
             int yStart = (int) (Math.floor(groundHeightAt(x) / Block.SIZE) * Block.SIZE);
 
-            for (int y = yStart; y < windowDimensions.y(); y += Block.SIZE) {
+            for (int y = yStart; y < yEnd; y += Block.SIZE) {
                 Block block = new Block(new Vector2(x, y), rectangleRenderable);
-                if (y == yStart) {
-                    block.setTag(GROUND_SURFACE);
-                }
+                if (y == yStart) block.setTag(GROUND_SURFACE);
                 blocks.add(block);
             }
         }
-
         return blocks;
     }
+
 
 }

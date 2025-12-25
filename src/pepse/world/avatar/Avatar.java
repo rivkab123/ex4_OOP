@@ -1,11 +1,14 @@
 package pepse.world.avatar;
 
 import danogl.GameObject;
+import danogl.collisions.Collision;
 import danogl.gui.ImageReader;
 import danogl.gui.UserInputListener;
 import danogl.gui.rendering.AnimationRenderable;
+import danogl.gui.rendering.Camera;
 import danogl.gui.rendering.Renderable;
 import danogl.util.Vector2;
+
 
 import java.awt.event.KeyEvent;
 
@@ -23,6 +26,8 @@ public class Avatar extends GameObject{
     private static final int ENERGY_LOSS_JUMP = 20;
     private static final int ENERGY_LOSS_AIR_JUMP = 50;
     private static final int ENERGY_RECOVERY = 1;
+    private static final int ENERGY_FRUIT_BONUS = 10;
+
 
     // --- Animation Constants ---
     private static final double FRAME_DURATION = 0.25;
@@ -36,6 +41,9 @@ public class Avatar extends GameObject{
     private static final String[] JUMPING_IMGS = {
             "assets/jump_0.png", "assets/jump_1.png", "assets/jump_2.png", "assets/jump_3.png"
     };
+    private static final String GROUND_SURFACE_TAG = "top_block";
+    private boolean onGround;
+
 
     // --- Members ---
     private final UserInputListener inputListener;
@@ -51,24 +59,23 @@ public class Avatar extends GameObject{
     private enum State {IDLE, RUNNING, JUMPING}
 
 
-    public Avatar(Vector2 topLeftCorner,
-                  UserInputListener inputListener, ImageReader imageReader) {
+    public Avatar(Vector2 topLeftCorner,UserInputListener inputListener, ImageReader imageReader) {
 
         // Initialize GameObject
-        AnimationRenderable standingAnimation = new AnimationRenderable(STANDING_IMGS, imageReader, false, FRAME_DURATION);;
-        super(topLeftCorner, AVATAR_DIMENSIONS, standingAnimation);
+        super(topLeftCorner, AVATAR_DIMENSIONS, new AnimationRenderable(STANDING_IMGS, imageReader, false, FRAME_DURATION));
 
         // Load Animations
-        this.standingAnimation = standingAnimation;
+        this.standingAnimation = new AnimationRenderable(STANDING_IMGS, imageReader, false, FRAME_DURATION);
         this.runningAnimation = new AnimationRenderable(RUNNING_IMGS, imageReader, false, FRAME_DURATION);
         this.jumpingAnimation = new AnimationRenderable(JUMPING_IMGS, imageReader, false, FRAME_DURATION);
 
         this.curruntState = State.IDLE;
         this.energy = MAX_ENERGY;
         this.inputListener = inputListener;
+        this.onGround = true;
 
         // Physics Setup
-        physics().preventIntersectionsFromDirection(Vector2.ZERO);
+        physics().preventIntersectionsFromDirection(Vector2.DOWN);
         transform().setAccelerationY(GRAVITY);
     }
 
@@ -81,6 +88,20 @@ public class Avatar extends GameObject{
         handleEnergyRecovery(xVel);
         updateState(xVel);
     }
+
+    @Override
+    public void onCollisionEnter(GameObject other, Collision collision) {
+        if(GROUND_SURFACE_TAG.equals(other.getTag())){
+            onGround = true;
+            this.transform().setVelocityY(0);
+        }
+
+        if("fruit".equals(other.getTag())){
+            ((pepse.world.trees.Fruit) other).disappear(); // safe casting
+            energy += ENERGY_FRUIT_BONUS;
+        }
+    }
+
 
     /**
      * Returns the current energy level.
@@ -100,15 +121,14 @@ public class Avatar extends GameObject{
         float xVel = 0;
         boolean moveLeft = inputListener.isKeyPressed(KeyEvent.VK_LEFT);
         boolean moveRight = inputListener.isKeyPressed(KeyEvent.VK_RIGHT);
-        boolean isOnGround = getVelocity().y() == 0;
 
         if (moveLeft != moveRight) {
             // Condition: Can move if in air OR if on ground with enough energy
-            if (!isOnGround || energy >= ENERGY_LOSS_RUN) {
+            if (!onGround || energy >= ENERGY_LOSS_RUN) {
                 xVel = moveLeft ? -VELOCITY_X : VELOCITY_X;
 
                 // Decrease energy only when moving on the ground
-                if (isOnGround) {
+                if (onGround) {
                     energy -= ENERGY_LOSS_RUN;
                 }
             }
@@ -123,14 +143,15 @@ public class Avatar extends GameObject{
      */
     private void handleJump() {
         if (inputListener.isKeyPressed(KeyEvent.VK_SPACE)) {
-            boolean isOnGround = getVelocity().y() == 0;
 
-            if (isOnGround && energy >= ENERGY_LOSS_JUMP) {
+            if (onGround && energy >= ENERGY_LOSS_JUMP) {
                 transform().setVelocityY(VELOCITY_Y);
                 energy -= ENERGY_LOSS_JUMP;
-            } else if (!isOnGround && energy >= ENERGY_LOSS_AIR_JUMP) {
+                onGround = false;
+            } else if (!onGround && energy >= ENERGY_LOSS_AIR_JUMP) {
                 transform().setVelocityY(VELOCITY_Y);
                 energy -= ENERGY_LOSS_AIR_JUMP;
+                onGround = false;
             }
         }
     }
