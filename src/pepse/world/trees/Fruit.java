@@ -2,6 +2,7 @@
 package pepse.world.trees;
 
 import danogl.GameObject;
+import danogl.components.ScheduledTask;
 import danogl.gui.rendering.OvalRenderable;
 import danogl.util.Vector2;
 
@@ -14,8 +15,10 @@ import java.util.Random;
  *
  * NOTE: These are the 4 colors you asked for (red, yellow, orange, purple).
  */
+
 public class Fruit extends GameObject {
 
+    private static final float DAY_CYCLE_LENGTH = 30f;
     private static final Random RANDOM = new Random();
     private boolean eaten;
 
@@ -44,6 +47,12 @@ public class Fruit extends GameObject {
         eaten = true;
         setDimensions(Vector2.ZERO);        // no size -> effectively no collision
         renderer().setOpaqueness(0f);       // invisible (if your renderer supports this)
+        new ScheduledTask(
+                this,                 // owner that always exists
+                DAY_CYCLE_LENGTH,     // 30 seconds
+                false,                 // repeat forever
+                this::respawn
+        );
     }
 
     public void respawn() {

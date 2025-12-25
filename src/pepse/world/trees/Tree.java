@@ -88,7 +88,7 @@ public class Tree {
         int rows = canopySize / LEAF_SIZE;
 
         Vector2 leafSize = new Vector2(LEAF_SIZE, LEAF_SIZE);
-        Vector2 fruitSize = leafSize.mult(LEAF_SIZE_FACTOR); // <= leaf size (requirement)
+        Vector2 fruitSize = leafSize.mult(LEAF_SIZE_FACTOR);
 
         for (int i = 0; i < cols; i++) {
             for (int j = 0; j < rows; j++) {

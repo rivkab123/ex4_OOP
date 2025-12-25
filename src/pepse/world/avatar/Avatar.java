@@ -6,6 +6,7 @@ import danogl.gui.ImageReader;
 import danogl.gui.UserInputListener;
 import danogl.gui.rendering.AnimationRenderable;
 import danogl.util.Vector2;
+import pepse.world.trees.Fruit;
 
 
 import java.awt.event.KeyEvent;
@@ -96,7 +97,7 @@ public class Avatar extends GameObject{
         }
 
         if(FRUIT_TAG.equals(other.getTag())){
-            ((pepse.world.trees.Fruit) other).disappear(); // safe casting
+            ((Fruit) other).disappear(); // safe casting
             energy += ENERGY_FRUIT_BONUS;
         }
     }
@@ -142,7 +143,6 @@ public class Avatar extends GameObject{
      */
     private void handleJump() {
         if (inputListener.isKeyPressed(KeyEvent.VK_SPACE)) {
-
             if (onGround && energy >= ENERGY_LOSS_JUMP) {
                 transform().setVelocityY(VELOCITY_Y);
                 energy -= ENERGY_LOSS_JUMP;

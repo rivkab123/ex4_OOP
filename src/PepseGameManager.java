@@ -9,6 +9,7 @@ import danogl.gui.WindowController;
 import danogl.gui.rendering.Camera;
 import danogl.util.Vector2;
 import pepse.world.Block;
+import pepse.world.Flora;
 import pepse.world.Sky;
 import pepse.world.Terrain;
 import pepse.world.avatar.Avatar;
@@ -23,6 +24,8 @@ import java.util.Random;
 
 import pepse.world.trees.Fruit;
 import pepse.world.trees.Tree;
+
+// TODO adding Flora class
 
 public class PepseGameManager extends GameManager {
 
@@ -45,10 +48,8 @@ public class PepseGameManager extends GameManager {
 
     private static final int TREE_ODDS = 1;
     private static final int TOTAL_ODDS = 10;
-    private final ArrayList<Fruit> allFruits = new ArrayList<>();
 
-    private GameObject cycleTaskAnchor;
-
+    private Flora flora;
 
     public static void main(String[] args) {
         new PepseGameManager().run();
@@ -61,33 +62,36 @@ public class PepseGameManager extends GameManager {
                                WindowController windowController) {
         super.initializeGame(imageReader, soundReader, inputListener, windowController);
 
-        Vector2 windowDimension = windowController.getWindowDimensions();
+        Vector2 windowDimensions = windowController.getWindowDimensions();
 
-        createSky(windowDimension);
-        createDayNightCycle(windowDimension);
+        createSky(windowDimensions);
+        createDayNightCycle(windowDimensions);
 
-        Terrain terrain = createTerrain(windowDimension);
+        Terrain terrain = createTerrain(windowDimensions);
 
-        Avatar avatar = createAvatar(imageReader, inputListener, windowDimension, terrain, windowController);
+        createFlora(windowDimensions,terrain);
+
+        Avatar avatar = createAvatar(imageReader, inputListener, windowDimensions, terrain, windowController);
 
         createUI(avatar);
     }
 
-    private void startDayNightCycleFruitRespawn() {
-        new ScheduledTask(
-                cycleTaskAnchor,                 // owner that always exists
-                DAY_CYCLE_LENGTH,     // 30 seconds
-                true,                 // repeat forever
-                this::respawnFruitsAtCycleEnd
-        );
-    }
+    private void createFlora(Vector2 windowDimension,Terrain terrain) {
+        flora = new Flora(terrain::groundHeightAt);
+        ArrayList<Tree> trees = flora.createInRange(0, (int) windowDimension.x());
 
-    private void respawnFruitsAtCycleEnd() {
-        for (Fruit fruit : allFruits) {
-            fruit.respawn();
+        for (Tree tree : trees) {
+            gameObjects().addGameObject(tree.getTreeBase(), Layer.STATIC_OBJECTS);
+
+            for (GameObject leaf : tree.getTreeLeaves()) {
+                gameObjects().addGameObject(leaf, Layer.FOREGROUND);
+            }
+
+            for (Fruit fruit : tree.getFruits()) {
+                gameObjects().addGameObject(fruit, Layer.STATIC_OBJECTS);
+            }
         }
     }
-
 
     private void createSky(Vector2 windowDimension) {
         GameObject sky = Sky.create(windowDimension);
@@ -105,10 +109,6 @@ public class PepseGameManager extends GameManager {
         sunHalo.addComponent(deltaTime -> sunHalo.setCenter(sun.getCenter()));
         gameObjects().addGameObject(sunHalo, SUN_HALO_LAYER);
 
-        cycleTaskAnchor = new GameObject(Vector2.ZERO, Vector2.ZERO, null);
-        gameObjects().addGameObject(cycleTaskAnchor, Layer.BACKGROUND);
-        startDayNightCycleFruitRespawn();
-
     }
 
     private Terrain createTerrain(Vector2 windowDimension) {
@@ -118,30 +118,11 @@ public class PepseGameManager extends GameManager {
         for (Block block : blocks) {
             if (GROUND_SURFACE_TAG.equals(block.getTag())) {
                 gameObjects().addGameObject(block, Layer.STATIC_OBJECTS);
-                addTree(block.getTopLeftCorner());
             } else {
                 gameObjects().addGameObject(block, DEEP_GROUND_LAYER);
             }
         }
         return terrain;
-    }
-
-    private void addTree(Vector2 blockTopLeftCorner) {
-        if (RANDOM.nextInt(TOTAL_ODDS) != TREE_ODDS) {
-            return;
-        }
-
-        Tree tree = new Tree(blockTopLeftCorner);
-        gameObjects().addGameObject(tree.getTreeBase(), Layer.STATIC_OBJECTS);
-
-        for (GameObject leaf : tree.getTreeLeaves()) {
-            gameObjects().addGameObject(leaf, Layer.FOREGROUND);
-        }
-
-        for (Fruit fruit : tree.getFruits()) {
-            gameObjects().addGameObject(fruit, Layer.STATIC_OBJECTS);
-            allFruits.add(fruit);
-        }
     }
 
     private Avatar createAvatar(ImageReader imageReader,
