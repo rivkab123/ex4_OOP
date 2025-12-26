@@ -23,7 +23,7 @@ import java.util.Random;
 // TODO prevent the avatar from passing trees freely
 public class Tree {
 
-    private static final Random RANDOM = new Random();
+    private final Random random;
 
     // ---- Trunk constraints (pixels) ----
     private static final int TRUNK_MIN_HEIGHT = 150;
@@ -52,6 +52,10 @@ public class Tree {
     private final List<Fruit> fruits = new ArrayList<>();
 
     public Tree(Vector2 groundTopLeft) {
+
+        // TODO change numbers to constant variables
+        this.random = new Random((long)groundTopLeft.x()*31 + (long)groundTopLeft.y());
+
         int trunkHeight = randInt(TRUNK_MIN_HEIGHT, TRUNK_MAX_HEIGHT);
         int trunkWidth  = randInt(TRUNK_MIN_WIDTH, TRUNK_MAX_WIDTH);
         int canopyHalf  = randInt(CANOPY_MIN_HALF_SIZE, CANOPY_MAX_HALF_SIZE);
@@ -94,12 +98,12 @@ public class Tree {
             for (int j = 0; j < rows; j++) {
                 Vector2 cellTopLeft = canopyTopLeft.add(new Vector2(i * LEAF_SIZE, j * LEAF_SIZE));
 
-                if (RANDOM.nextFloat() <= LEAF_DENSITY) {
+                if (random.nextFloat() <= LEAF_DENSITY) {
                     Leaf leaf = new Leaf(cellTopLeft, leafSize);
                     leaves.add(leaf);
                 }
 
-                if (RANDOM.nextFloat() <= FRUIT_DENSITY) {
+                if (random.nextFloat() <= FRUIT_DENSITY) {
                     // center fruit within the leaf cell
                     Vector2 fruitTopLeft = cellTopLeft.add(leafSize.subtract(fruitSize).mult(HALF_FACTOR));
                     Fruit fruit = new Fruit(fruitTopLeft, fruitSize);
@@ -111,8 +115,8 @@ public class Tree {
     }
 
     // inclusive
-    private static int randInt(int min, int max) {
-        return min + RANDOM.nextInt(max - min + 1);
+    private int randInt(int min, int max) {
+        return min + random.nextInt(max - min + 1);
     }
 
     // ===== Getters =====

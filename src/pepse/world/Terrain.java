@@ -3,6 +3,7 @@ package pepse.world;
 import danogl.gui.rendering.RectangleRenderable;
 import danogl.util.Vector2;
 import pepse.utils.ColorSupplier;
+import pepse.utils.NoiseGenerator;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -12,22 +13,24 @@ public class Terrain {
 
 
     private static final float GROUND_INITIAL_Y_RATIO  = 2f / 3f;
+    private static final double NOISE_FACTOR = 210;
     private static final String GROUND_SURFACE = "top_block";
     private final Vector2 windowDimensions;
     private static final Color BASE_GROUND_COLOR = new Color(212, 123, 74);
     private final float groundHeightAtX0;
     private static final int TERRAIN_DEPTH = 20;
-
-
+    private final NoiseGenerator noiseGenerator;
 
     public Terrain(Vector2 windowDimensions, int seed) {
         this.windowDimensions = windowDimensions;
-        groundHeightAtX0 = windowDimensions.y() * GROUND_INITIAL_Y_RATIO ;
+        this.groundHeightAtX0 = windowDimensions.y() * GROUND_INITIAL_Y_RATIO ;
+        this.noiseGenerator = new NoiseGenerator(seed, (int)groundHeightAtX0);
     }
 
     // TODO random ground surface
     public float groundHeightAt(float x) {
-        return groundHeightAtX0;
+        float noise = (float) noiseGenerator.noise(x, NOISE_FACTOR);
+        return groundHeightAtX0 + noise;
     }
 
     public List<Block> createInRange(int minX, int maxX) {

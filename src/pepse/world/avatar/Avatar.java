@@ -75,7 +75,7 @@ public class Avatar extends GameObject{
         this.onGround = true;
 
         // Physics Setup
-        physics().preventIntersectionsFromDirection(Vector2.DOWN);
+        physics().preventIntersectionsFromDirection(Vector2.ZERO);
         transform().setAccelerationY(GRAVITY);
     }
 
@@ -98,7 +98,7 @@ public class Avatar extends GameObject{
 
         if(FRUIT_TAG.equals(other.getTag())){
             ((Fruit) other).disappear(); // safe casting
-            energy += ENERGY_FRUIT_BONUS;
+            energy = Math.min(MAX_ENERGY, energy + ENERGY_FRUIT_BONUS);
         }
     }
 
@@ -150,7 +150,6 @@ public class Avatar extends GameObject{
             } else if (!onGround && energy >= ENERGY_LOSS_AIR_JUMP) {
                 transform().setVelocityY(VELOCITY_Y);
                 energy -= ENERGY_LOSS_AIR_JUMP;
-                onGround = false;
             }
         }
     }

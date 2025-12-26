@@ -19,7 +19,7 @@ import java.util.Random;
  */
 public class Leaf extends GameObject {
 
-    private static final Random RANDOM = new Random();
+    private final Random random;
 
     // ---- Leaf color (green) ----
     private static final Color LEAF_BASE_COLOR = new Color(50, 200, 30);
@@ -44,19 +44,22 @@ public class Leaf extends GameObject {
     private static final float LEAF_SIZE_DUR_RANGE = 2.0f;
 
     public Leaf(Vector2 topLeft, Vector2 size) {
-        super(topLeft, size, new RectangleRenderable(addRgbNoise(LEAF_BASE_COLOR, LEAF_COLOR_NOISE)));
+        super(topLeft, size, null);
+        // TODO change numbers to constant variables
+        this.random = new Random((long)topLeft.x() * 73 + (long)topLeft.y() * 37);
+        renderer().setRenderable(new RectangleRenderable(addRgbNoise(LEAF_BASE_COLOR, LEAF_COLOR_NOISE)));
         animate(size);
     }
 
     private void animate(Vector2 baseSize) {
-        final float startDelay = RANDOM.nextFloat() * LEAF_START_DELAY_MAX;
+        final float startDelay = random.nextFloat() * LEAF_START_DELAY_MAX;
 
         final float maxAngle = randInt(LEAF_ANGLE_MIN_DEG, LEAF_ANGLE_MAX_DEG);
-        final float angleDuration = LEAF_ANGLE_DUR_MIN + RANDOM.nextFloat() * LEAF_ANGLE_DUR_RANGE;
+        final float angleDuration = LEAF_ANGLE_DUR_MIN + random.nextFloat() * LEAF_ANGLE_DUR_RANGE;
 
-        final float minScale = LEAF_SCALE_MIN_BASE + RANDOM.nextFloat() * LEAF_SCALE_MIN_RANGE;
-        final float maxScale = LEAF_SCALE_MAX_BASE + RANDOM.nextFloat() * LEAF_SCALE_MAX_RANGE;
-        final float sizeDuration = LEAF_SIZE_DUR_MIN + RANDOM.nextFloat() * LEAF_SIZE_DUR_RANGE;
+        final float minScale = LEAF_SCALE_MIN_BASE + random.nextFloat() * LEAF_SCALE_MIN_RANGE;
+        final float maxScale = LEAF_SCALE_MAX_BASE + random.nextFloat() * LEAF_SCALE_MAX_RANGE;
+        final float sizeDuration = LEAF_SIZE_DUR_MIN + random.nextFloat() * LEAF_SIZE_DUR_RANGE;
 
         new ScheduledTask(this, startDelay, false, () -> {
             new Transition<>(
@@ -81,7 +84,7 @@ public class Leaf extends GameObject {
         });
     }
 
-    private static Color addRgbNoise(Color base, int noise) {
+    private Color addRgbNoise(Color base, int noise) {
         int r = clamp255(base.getRed()   + randInt(-noise, noise));
         int g = clamp255(base.getGreen() + randInt(-noise, noise));
         int b = clamp255(base.getBlue()  + randInt(-noise, noise));
@@ -93,7 +96,7 @@ public class Leaf extends GameObject {
     }
 
     // inclusive
-    private static int randInt(int min, int max) {
-        return min + RANDOM.nextInt(max - min + 1);
+    private int randInt(int min, int max) {
+        return min + random.nextInt(max - min + 1);
     }
 }

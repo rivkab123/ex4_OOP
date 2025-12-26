@@ -33,14 +33,17 @@ public class Fruit extends GameObject {
     private final Vector2 size;
 
     public Fruit(Vector2 topLeft, Vector2 size) {
-        super(topLeft, size, new OvalRenderable(randomFruitColor()));
+        super(topLeft, size, new OvalRenderable(randomFruitColor(topLeft)));
         setTag(TAG);
         eaten = false;
         this.size = size;
     }
 
-    private static Color randomFruitColor() {
-        return FRUIT_COLORS[RANDOM.nextInt(FRUIT_COLORS.length)];
+
+    // TODO change numbers to constant variables
+    private static Color randomFruitColor(Vector2 pos) {
+        Random random = new Random((long)(pos.x()*53 + pos.y() * 97));
+        return FRUIT_COLORS[random.nextInt(FRUIT_COLORS.length)];
     }
 
     public void disappear() {
