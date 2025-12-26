@@ -33,11 +33,11 @@ public class Terrain {
         return groundHeightAtX0 + noise;
     }
 
-    public List<Block> createInRange(int minX, int maxX) {
+    public ArrayList<Block> createInRange(int minX, int maxX) {
         RectangleRenderable rectangleRenderable =
                 new RectangleRenderable(ColorSupplier.approximateColor(BASE_GROUND_COLOR));
 
-        List<Block> blocks = new ArrayList<>();
+        ArrayList<Block> blocks = new ArrayList<>();
 
         int firstX = (int) Math.floor((float) minX / Block.SIZE) * Block.SIZE;
         int yEnd = (int) windowDimensions.y() + TERRAIN_DEPTH * Block.SIZE;

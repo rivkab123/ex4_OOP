@@ -1,3 +1,4 @@
+// ======================= Avatar.java =======================
 package pepse.world.avatar;
 
 import danogl.GameObject;
@@ -6,12 +7,12 @@ import danogl.gui.ImageReader;
 import danogl.gui.UserInputListener;
 import danogl.gui.rendering.AnimationRenderable;
 import danogl.util.Vector2;
+import pepse.world.Block;
 import pepse.world.trees.Fruit;
-
 
 import java.awt.event.KeyEvent;
 
-public class Avatar extends GameObject{
+public class Avatar extends GameObject {
 
     // --- Physics Constants ---
     private static final Vector2 AVATAR_DIMENSIONS = new Vector2(50, 50);
@@ -27,7 +28,6 @@ public class Avatar extends GameObject{
     private static final int ENERGY_RECOVERY = 1;
     private static final int ENERGY_FRUIT_BONUS = 10;
 
-
     // --- Animation Constants ---
     private static final double FRAME_DURATION = 0.25;
     private static final String[] STANDING_IMGS = {
@@ -40,10 +40,9 @@ public class Avatar extends GameObject{
     private static final String[] JUMPING_IMGS = {
             "assets/jump_0.png", "assets/jump_1.png", "assets/jump_2.png", "assets/jump_3.png"
     };
+
     private static final String GROUND_SURFACE_TAG = "top_block";
     public static final String FRUIT_TAG = "fruit";
-    private boolean onGround;
-
 
     // --- Members ---
     private final UserInputListener inputListener;
@@ -51,20 +50,23 @@ public class Avatar extends GameObject{
     private final AnimationRenderable standingAnimation;
     private final AnimationRenderable runningAnimation;
     private final AnimationRenderable jumpingAnimation;
+
     private State curruntState;
+
+    // Ground handling:
+    private boolean onGround;
+    private int groundContacts = 0; // robust vs corners / seams
 
     /**
      * Enum representing the possible movement states of the avatar.
      */
     private enum State {IDLE, RUNNING, JUMPING}
 
+    public Avatar(Vector2 topLeftCorner, UserInputListener inputListener, ImageReader imageReader) {
 
-    public Avatar(Vector2 topLeftCorner,UserInputListener inputListener, ImageReader imageReader) {
+        super(topLeftCorner, AVATAR_DIMENSIONS,
+                new AnimationRenderable(STANDING_IMGS, imageReader, false, FRAME_DURATION));
 
-        // Initialize GameObject
-        super(topLeftCorner, AVATAR_DIMENSIONS, new AnimationRenderable(STANDING_IMGS, imageReader, false, FRAME_DURATION));
-
-        // Load Animations
         this.standingAnimation = new AnimationRenderable(STANDING_IMGS, imageReader, false, FRAME_DURATION);
         this.runningAnimation = new AnimationRenderable(RUNNING_IMGS, imageReader, false, FRAME_DURATION);
         this.jumpingAnimation = new AnimationRenderable(JUMPING_IMGS, imageReader, false, FRAME_DURATION);
@@ -72,7 +74,9 @@ public class Avatar extends GameObject{
         this.curruntState = State.IDLE;
         this.energy = MAX_ENERGY;
         this.inputListener = inputListener;
-        this.onGround = true;
+
+        this.onGround = false;
+        this.groundContacts = 0;
 
         // Physics Setup
         physics().preventIntersectionsFromDirection(Vector2.ZERO);
@@ -91,17 +95,36 @@ public class Avatar extends GameObject{
 
     @Override
     public void onCollisionEnter(GameObject other, Collision collision) {
-        if(GROUND_SURFACE_TAG.equals(other.getTag())){
-            onGround = true;
-            this.transform().setVelocityY(0);
+        super.onCollisionEnter(other, collision);
+
+        // Fruit
+        if (FRUIT_TAG.equals(other.getTag())) {
+            ((Fruit) other).disappear(); // safe casting per your design
+            energy = Math.min(MAX_ENERGY, energy + ENERGY_FRUIT_BONUS);
+            return;
         }
 
-        if(FRUIT_TAG.equals(other.getTag())){
-            ((Fruit) other).disappear(); // safe casting
-            energy = Math.min(MAX_ENERGY, energy + ENERGY_FRUIT_BONUS);
+        // Ground: ONLY count as ground when we land on top (prevents corner bugs)
+        if (isGround(other) && isLandingOnGround(collision)) {
+            groundContacts++;
+            onGround = true;
+
+            // stop downward jitter so we don't "sink" at seams/corners
+            if (getVelocity().y() > 0) {
+                transform().setVelocityY(0);
+            }
         }
     }
 
+    @Override
+    public void onCollisionExit(GameObject other) {
+        super.onCollisionExit(other);
+
+        if (isGround(other)) {
+            groundContacts = Math.max(0, groundContacts - 1);
+            onGround = groundContacts > 0;
+        }
+    }
 
     /**
      * Returns the current energy level.
@@ -110,8 +133,21 @@ public class Avatar extends GameObject{
         return energy;
     }
 
-
     // --- Private Helper Methods ---
+
+    private boolean isGround(GameObject other) {
+        // Most robust: treat ANY terrain Block as ground.
+        // If you prefer tags, ensure ALL collidable terrain blocks share a "ground" tag.
+        return other instanceof Block
+                || GROUND_SURFACE_TAG.equals(other.getTag())
+                || "ground".equals(other.getTag());
+    }
+
+    private boolean isLandingOnGround(Collision collision) {
+        // In DanOGL, when standing on something, the collision normal should point upward on us:
+        // i.e., normal.y() is negative (pushing the avatar up).
+        return collision.getNormal().y() < -0.5f;
+    }
 
     /**
      * Calculates horizontal velocity based on input and manages energy loss for running.
@@ -123,7 +159,7 @@ public class Avatar extends GameObject{
         boolean moveRight = inputListener.isKeyPressed(KeyEvent.VK_RIGHT);
 
         if (moveLeft != moveRight) {
-            // Condition: Can move if in air OR if on ground with enough energy
+            // Can move if in air OR if on ground with enough energy
             if (!onGround || energy >= ENERGY_LOSS_RUN) {
                 xVel = moveLeft ? -VELOCITY_X : VELOCITY_X;
 
@@ -147,6 +183,7 @@ public class Avatar extends GameObject{
                 transform().setVelocityY(VELOCITY_Y);
                 energy -= ENERGY_LOSS_JUMP;
                 onGround = false;
+                groundContacts = 0; // leaving ground intentionally
             } else if (!onGround && energy >= ENERGY_LOSS_AIR_JUMP) {
                 transform().setVelocityY(VELOCITY_Y);
                 energy -= ENERGY_LOSS_AIR_JUMP;
@@ -158,7 +195,7 @@ public class Avatar extends GameObject{
      * Recovers energy when the avatar is stationary on the ground.
      */
     private void handleEnergyRecovery(float xVel) {
-        if (getVelocity().y() == 0 && xVel == 0) {
+        if (onGround && xVel == 0) {
             energy = Math.min(MAX_ENERGY, energy + ENERGY_RECOVERY);
         }
     }

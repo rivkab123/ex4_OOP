@@ -1,17 +1,14 @@
+// ======================= PepseGameManager.java =======================
 import danogl.GameManager;
 import danogl.GameObject;
 import danogl.collisions.Layer;
-import danogl.components.ScheduledTask;
 import danogl.gui.ImageReader;
 import danogl.gui.SoundReader;
 import danogl.gui.UserInputListener;
 import danogl.gui.WindowController;
 import danogl.gui.rendering.Camera;
 import danogl.util.Vector2;
-import pepse.world.Block;
-import pepse.world.Flora;
-import pepse.world.Sky;
-import pepse.world.Terrain;
+import pepse.world.*;
 import pepse.world.avatar.Avatar;
 import pepse.world.avatar.EnergyDisplay;
 import pepse.world.daynight.Night;
@@ -19,13 +16,9 @@ import pepse.world.daynight.Sun;
 import pepse.world.daynight.SunHalo;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 import pepse.world.trees.Fruit;
 import pepse.world.trees.Tree;
-
-// TODO adding Flora class
 
 public class PepseGameManager extends GameManager {
 
@@ -43,13 +36,14 @@ public class PepseGameManager extends GameManager {
     private static final float AVATAR_SIZE = 50f;
     private static final Vector2 ENERGY_DISPLAY_POS = new Vector2(5, 5);
     private static final Vector2 ENERGY_DISPLAY_SIZE = new Vector2(20, 20);
+    public static final int FIRST_CHUNKS = 3;
 
-    private final Random RANDOM = new Random();
-
-    private static final int TREE_ODDS = 1;
-    private static final int TOTAL_ODDS = 10;
-
-    private Flora flora;
+    private Avatar avatar;
+    private Terrain terrain_generator;
+    private Flora flora_generator;
+    private BiListDeque<Chunk> chunks;
+    private int current_chunk;
+    private Vector2 windowDimensions;
 
     public static void main(String[] args) {
         new PepseGameManager().run();
@@ -62,25 +56,84 @@ public class PepseGameManager extends GameManager {
                                WindowController windowController) {
         super.initializeGame(imageReader, soundReader, inputListener, windowController);
 
-        Vector2 windowDimensions = windowController.getWindowDimensions();
+        windowDimensions = windowController.getWindowDimensions();
 
-        createSky(windowDimensions);
-        createDayNightCycle(windowDimensions);
-
-        Terrain terrain = createTerrain(windowDimensions);
-
-        createFlora(windowDimensions,terrain);
-
-        Avatar avatar = createAvatar(imageReader, inputListener, windowDimensions, terrain, windowController);
-
-        createUI(avatar);
+        createSky();
+        createDayNightCycle();
+        createFirstChunks();
+        createAvatar(imageReader, inputListener);
+        createUI();
     }
 
-    private void createFlora(Vector2 windowDimension,Terrain terrain) {
-        flora = new Flora(terrain::groundHeightAt);
-        ArrayList<Tree> trees = flora.createInRange(0, (int) windowDimension.x());
+    @Override
+    public void update(float delta) {
+        super.update(delta);
+        handleAvatarLocation();
+    }
 
-        for (Tree tree : trees) {
+    private void handleAvatarLocation() {
+        int W = (int) windowDimensions.x();
+        int avatarX = (int) avatar.getCenter().x();
+        int chunkId = Math.floorDiv(avatarX, W);
+
+        if (chunkId == current_chunk) return;
+
+        int dir = Integer.compare(chunkId, current_chunk); // +1 right, -1 left
+
+        int toEnable = chunkId + dir;        // new forward neighbor
+        int toDisable = chunkId - 2 * dir;   // old far neighbor behind
+
+        // Enable/create forward neighbor
+        if (chunks.isValidIndex(toEnable)) {
+            enableChunk(chunks.get(toEnable));
+        } else {
+            int minX = toEnable * W;
+            int maxX = (toEnable + 1) * W;
+            createChunkIn(minX, maxX);
+        }
+
+        // Disable far neighbor behind
+        if (chunks.isValidIndex(toDisable)) {
+            disableChunk(chunks.get(toDisable));
+        }
+
+        current_chunk = chunkId;
+    }
+
+    private void disableChunk(Chunk chunk) {
+        for (Block block : chunk.getBlocks()) {
+            if (GROUND_SURFACE_TAG.equals(block.getTag())) {
+                gameObjects().removeGameObject(block, Layer.STATIC_OBJECTS);
+            } else {
+                gameObjects().removeGameObject(block, DEEP_GROUND_LAYER);
+            }
+        }
+
+        for (Tree tree : chunk.getTrees()) {
+            gameObjects().removeGameObject(tree.getTreeBase(), Layer.STATIC_OBJECTS);
+
+            for (GameObject leaf : tree.getTreeLeaves()) {
+                gameObjects().removeGameObject(leaf, Layer.FOREGROUND);
+            }
+
+            for (Fruit fruit : tree.getFruits()) {
+                gameObjects().removeGameObject(fruit, Layer.STATIC_OBJECTS);
+            }
+        }
+    }
+
+    private void enableChunk(Chunk chunk) {
+        for (Block block : chunk.getBlocks()) {
+            // NOTE: for avatar stability, it's OK if deep blocks don't collide,
+            // but surface blocks MUST collide & be in a collidable layer.
+            if (GROUND_SURFACE_TAG.equals(block.getTag())) {
+                gameObjects().addGameObject(block, Layer.STATIC_OBJECTS);
+            } else {
+                gameObjects().addGameObject(block, DEEP_GROUND_LAYER);
+            }
+        }
+
+        for (Tree tree : chunk.getTrees()) {
             gameObjects().addGameObject(tree.getTreeBase(), Layer.STATIC_OBJECTS);
 
             for (GameObject leaf : tree.getTreeLeaves()) {
@@ -93,65 +146,70 @@ public class PepseGameManager extends GameManager {
         }
     }
 
-    private void createSky(Vector2 windowDimension) {
-        GameObject sky = Sky.create(windowDimension);
+    private void createFirstChunks() {
+        terrain_generator = new Terrain(windowDimensions, TERRAIN_SEED);
+        flora_generator = new Flora(terrain_generator::groundHeightAt);
+        chunks = new BiListDeque<>();
+
+        int windowsDimX = (int) windowDimensions.x();
+        int initialX = -windowsDimX;
+
+        for (int i = 0; i < FIRST_CHUNKS; i++) {
+            int minX = initialX + windowsDimX * i;
+            int maxX = initialX + windowsDimX * (i + 1);
+            createChunkIn(minX, maxX);
+        }
+
+        current_chunk = 0;
+    }
+
+    private void createChunkIn(int minX, int maxX) {
+        ArrayList<Tree> trees = flora_generator.createInRange(minX, maxX);
+        ArrayList<Block> blocks = terrain_generator.createInRange(minX, maxX);
+        Chunk chunk = new Chunk(blocks, trees);
+
+        enableChunk(chunk);
+
+        if (minX < 0) {
+            chunks.addFirst(chunk);
+        } else {
+            chunks.addLast(chunk);
+        }
+    }
+
+    private void createSky() {
+        GameObject sky = Sky.create(windowDimensions);
         gameObjects().addGameObject(sky, SKY_LAYER);
     }
 
-    private void createDayNightCycle(Vector2 windowDimension) {
-        GameObject night = Night.create(windowDimension, DAY_CYCLE_LENGTH);
+    private void createDayNightCycle() {
+        GameObject night = Night.create(windowDimensions, DAY_CYCLE_LENGTH);
         gameObjects().addGameObject(night, Layer.FOREGROUND);
 
-        GameObject sun = Sun.create(windowDimension, SUN_CYCLE_LENGTH);
+        GameObject sun = Sun.create(windowDimensions, SUN_CYCLE_LENGTH);
         gameObjects().addGameObject(sun, SUN_LAYER);
 
         GameObject sunHalo = SunHalo.create(sun);
         sunHalo.addComponent(deltaTime -> sunHalo.setCenter(sun.getCenter()));
         gameObjects().addGameObject(sunHalo, SUN_HALO_LAYER);
-
     }
 
-    private Terrain createTerrain(Vector2 windowDimension) {
-        Terrain terrain = new Terrain(windowDimension, TERRAIN_SEED);
-        List<Block> blocks = terrain.createInRange(0, (int) windowDimension.x());
-
-        for (Block block : blocks) {
-            if (GROUND_SURFACE_TAG.equals(block.getTag())) {
-                gameObjects().addGameObject(block, Layer.STATIC_OBJECTS);
-            } else {
-                gameObjects().addGameObject(block, DEEP_GROUND_LAYER);
-            }
-        }
-        return terrain;
-    }
-
-    private Avatar createAvatar(ImageReader imageReader,
-                                UserInputListener inputListener,
-                                Vector2 windowDimension,
-                                Terrain terrain,
-                                WindowController windowController) {
-        float avatarX = windowDimension.x() / 2;
-        float groundY = (float) (Math.floor(terrain.groundHeightAt(avatarX) / Block.SIZE) * Block.SIZE);
+    private void createAvatar(ImageReader imageReader, UserInputListener inputListener) {
+        float avatarX = windowDimensions.x() / 2;
+        float groundY = (float) (Math.floor(terrain_generator.groundHeightAt(avatarX) / Block.SIZE) * Block.SIZE);
         float avatarY = groundY - AVATAR_SIZE;
 
         Vector2 avatarInitialPos = new Vector2(avatarX, avatarY);
-        Avatar avatar = new Avatar(avatarInitialPos, inputListener, imageReader);
+        avatar = new Avatar(avatarInitialPos, inputListener, imageReader);
         gameObjects().addGameObject(avatar, Layer.DEFAULT);
 
         Vector2 avatarCenter = avatarInitialPos.add(new Vector2(AVATAR_SIZE, AVATAR_SIZE).mult(0.5f));
-        Vector2 offset = windowController.getWindowDimensions().mult(0.5f).subtract(avatarCenter);
+        Vector2 offset = windowDimensions.mult(0.5f).subtract(avatarCenter);
 
-        setCamera(new Camera(
-                avatar,
-                offset,
-                windowController.getWindowDimensions(),
-                windowController.getWindowDimensions()
-        ));
-
-        return avatar;
+        setCamera(new Camera(avatar, offset, windowDimensions, windowDimensions));
     }
 
-    private void createUI(Avatar avatar) {
+    private void createUI() {
         GameObject energyDisplay = new EnergyDisplay(
                 ENERGY_DISPLAY_POS,
                 ENERGY_DISPLAY_SIZE,
@@ -160,5 +218,3 @@ public class PepseGameManager extends GameManager {
         gameObjects().addGameObject(energyDisplay, UI_LAYER);
     }
 }
-
-
