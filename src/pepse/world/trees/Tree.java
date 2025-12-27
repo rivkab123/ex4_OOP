@@ -34,8 +34,7 @@ public class Tree {
     // ---- Trunk constraints (pixels) ----
     private static final int TRUNK_MIN_HEIGHT = 150;
     private static final int TRUNK_MAX_HEIGHT = 350;
-    private static final int TRUNK_MIN_WIDTH  = 50;
-    private static final int TRUNK_MAX_WIDTH  = 80;
+    private static final int TRUNK_WIDTH = 30;
     private static final String TRUNK_TAG = "surface";
 
     // ---- Canopy / Leaves (pixels) ----
@@ -70,7 +69,7 @@ public class Tree {
         this.random = new Random(seed);
 
         int trunkHeight = randInt(TRUNK_MIN_HEIGHT, TRUNK_MAX_HEIGHT);
-        int trunkWidth  = randInt(TRUNK_MIN_WIDTH, TRUNK_MAX_WIDTH);
+        int trunkWidth  = TRUNK_WIDTH;
         int canopyHalf  = randInt(CANOPY_MIN_HALF_SIZE, CANOPY_MAX_HALF_SIZE);
 
         this.trunk = createTrunk(groundTopLeft, trunkWidth, trunkHeight);
@@ -96,7 +95,7 @@ public class Tree {
 
 
     private GameObject createTrunk(Vector2 groundTopLeft, int trunkWidth, int trunkHeight) {
-        Vector2 trunkTopLeft = groundTopLeft.subtract(new Vector2(trunkWidth * HALF_FACTOR, trunkHeight));
+        Vector2 trunkTopLeft = groundTopLeft.subtract(new Vector2(0, trunkHeight));
 
         GameObject trunk = new GameObject(
                 trunkTopLeft,
