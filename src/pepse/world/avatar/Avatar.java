@@ -172,8 +172,7 @@ public class Avatar extends GameObject {
 
     private boolean isGround(GameObject other) {
         return other instanceof Block
-                || SURFACE_TAG.equals(other.getTag())
-                || "ground".equals(other.getTag());
+                || SURFACE_TAG.equals(other.getTag());
     }
 
     private boolean isLandingOnGround(Collision collision) {
