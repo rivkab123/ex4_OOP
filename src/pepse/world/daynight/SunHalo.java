@@ -8,8 +8,11 @@ import danogl.util.Vector2;
 import java.awt.*;
 
 /**
- * Responsible for creating a visual halo effect around the sun.
- * The halo follows the sun's position to provide a glowing atmosphere.
+ * A utility class responsible for creating a visual halo effect around the sun.
+ * <p>
+ * The halo is rendered as a semi-transparent circle that surrounds the sun
+ * in order to create a glowing atmospheric effect. The halo is positioned
+ * in camera coordinates so it remains visually aligned with the sun.
  */
 public class SunHalo {
 
@@ -19,10 +22,17 @@ public class SunHalo {
     private static final float HALO_SIZE_MULTIPLICAND = 2f;
 
     /**
-     * Creates a SunHalo GameObject that represents a glowing circle around the sun.
-     * * @param sun The sun GameObject that this halo will surround.
-     * @return A GameObject representing the sun's halo.
+     * Creates and returns a {@link GameObject} representing a glowing halo
+     * around the given sun object.
+     * <p>
+     * The halo is created larger than the sun itself and is initially centered
+     * at the sun's position. It is rendered in camera coordinates to ensure
+     * consistent alignment with the sun on screen.
+     *
+     * @param sun the sun {@link GameObject} that the halo surrounds
+     * @return a {@link GameObject} representing the sun's halo
      */
+
     public static GameObject create(GameObject sun){
         // Prepare the visual representation
         OvalRenderable renderable = new OvalRenderable(SUN_HALO_COLOR);

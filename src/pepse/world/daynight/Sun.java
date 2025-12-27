@@ -5,21 +5,38 @@ import danogl.components.CoordinateSpace;
 import danogl.components.Transition;
 import danogl.gui.rendering.OvalRenderable;
 import danogl.util.Vector2;
-import pepse.world.Terrain;
 
 import java.awt.*;
 
 import static danogl.components.Transition.TransitionType.TRANSITION_LOOP;
 
+/**
+ * A utility class responsible for creating the sun game object.
+ * <p>
+ * The sun is rendered as a yellow circle that moves along a circular
+ * trajectory across the sky, completing a full rotation over a
+ * configurable day-night cycle length.
+ */
 public class Sun {
 
+    // --- Constants ---
     private static final float SUN_HEIGHT_RATIO = 0.2f;
     private static final float SUN_INITIAL_Y_RATIO  = 2f / 3f;
     private static final float SUN_INITIAL_X_RATIO = 0.5f;
     private static final float FULL_CIRCLE_DEGREES = 360f;
     private static final float INITIAL_DEGREES = 0f;
 
-
+    /**
+     * Creates and returns a sun game object.
+     * <p>
+     * The sun is rendered in camera coordinates so it remains fixed
+     * relative to the screen and moves along a circular path that
+     * represents its movement across the sky.
+     *
+     * @param windowDimensions the dimensions of the game window
+     * @param cycleLength the duration (in seconds) of a full day-night cycle
+     * @return a {@link GameObject} representing the sun
+     */
     public static GameObject create(Vector2 windowDimensions, float cycleLength) {
 
         OvalRenderable renderable = new OvalRenderable(Color.YELLOW);

@@ -1,4 +1,3 @@
-// ======================= Avatar.java =======================
 package pepse.world.avatar;
 
 import danogl.GameObject;
@@ -12,6 +11,13 @@ import pepse.world.trees.Fruit;
 
 import java.awt.event.KeyEvent;
 
+/**
+ * Represents the player-controlled avatar in the game.
+ * <p>
+ * The avatar supports horizontal movement, jumping (including mid-air jumps),
+ * collision-based ground detection, energy consumption and recovery,
+ * fruit collection, and animated rendering based on movement state.
+ */
 public class Avatar extends GameObject {
 
     // --- Physics Constants ---
@@ -41,7 +47,9 @@ public class Avatar extends GameObject {
             "assets/jump_0.png", "assets/jump_1.png", "assets/jump_2.png", "assets/jump_3.png"
     };
 
-    private static final String GROUND_SURFACE_TAG = "top_block";
+    private static final String SURFACE_TAG = "surface";
+
+    /** Tag identifying fruit objects */
     public static final String FRUIT_TAG = "fruit";
 
     // --- Members ---
@@ -62,7 +70,16 @@ public class Avatar extends GameObject {
      */
     private enum State {IDLE, RUNNING, JUMPING}
 
-    public Avatar(Vector2 topLeftCorner, UserInputListener inputListener, ImageReader imageReader) {
+    /**
+     * Constructs a new Avatar instance.
+     *
+     * @param topLeftCorner initial position of the avatar
+     * @param inputListener input listener for keyboard events
+     * @param imageReader image reader used to load animation frames
+     */
+    public Avatar(Vector2 topLeftCorner,
+                  UserInputListener inputListener,
+                  ImageReader imageReader) {
 
         super(topLeftCorner, AVATAR_DIMENSIONS,
                 new AnimationRenderable(STANDING_IMGS, imageReader, false, FRAME_DURATION));
@@ -83,6 +100,11 @@ public class Avatar extends GameObject {
         transform().setAccelerationY(GRAVITY);
     }
 
+    /**
+     * Updates the avatar every frame.
+     *
+     * @param deltaTime time elapsed since the last frame
+     */
     @Override
     public void update(float deltaTime) {
         super.update(deltaTime);
@@ -93,6 +115,12 @@ public class Avatar extends GameObject {
         updateState(xVel);
     }
 
+    /**
+     * Handles logic when a collision with another game object begins.
+     *
+     * @param other the object collided with
+     * @param collision collision data
+     */
     @Override
     public void onCollisionEnter(GameObject other, Collision collision) {
         super.onCollisionEnter(other, collision);
@@ -116,6 +144,11 @@ public class Avatar extends GameObject {
         }
     }
 
+    /**
+     * Handles logic when a collision with another game object ends.
+     *
+     * @param other the object the avatar stopped colliding with
+     */
     @Override
     public void onCollisionExit(GameObject other) {
         super.onCollisionExit(other);
@@ -127,7 +160,9 @@ public class Avatar extends GameObject {
     }
 
     /**
-     * Returns the current energy level.
+     * Returns the avatar's current energy level.
+     *
+     * @return current energy value
      */
     public float getEnergy() {
         return energy;
@@ -136,10 +171,8 @@ public class Avatar extends GameObject {
     // --- Private Helper Methods ---
 
     private boolean isGround(GameObject other) {
-        // Most robust: treat ANY terrain Block as ground.
-        // If you prefer tags, ensure ALL collidable terrain blocks share a "ground" tag.
         return other instanceof Block
-                || GROUND_SURFACE_TAG.equals(other.getTag())
+                || SURFACE_TAG.equals(other.getTag())
                 || "ground".equals(other.getTag());
     }
 

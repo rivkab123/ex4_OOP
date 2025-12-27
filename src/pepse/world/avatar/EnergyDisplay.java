@@ -9,10 +9,15 @@ import java.awt.*;
 import java.util.function.Supplier;
 
 /**
- * A UI element responsible for displaying the current energy level of the avatar.
- * It observes an energy supplier and updates the displayed text and color accordingly.
+ * A UI element responsible for displaying the avatar's current energy level.
+ * <p>
+ * The display observes an external energy supplier and updates its text
+ * and color dynamically based on the energy value.
+ * The element is rendered in camera coordinates so it remains fixed
+ * on the screen regardless of world movement.
  */
 public class EnergyDisplay extends GameObject {
+
     // --- Constants ---
     private static final String ENERGY_FORMAT = "%.0f%%";
     private static final float CRITICAL_ENERGY_THRESHOLD = 20f;
@@ -25,10 +30,11 @@ public class EnergyDisplay extends GameObject {
     private float lastEnergy;
 
     /**
-     * Constructs a new EnergyDisplay.
-     * @param topLeftCorner The position of the display on the screen.
-     * @param dimensions The size of the text display area.
-     * @param energySupplier A functional interface to fetch the current energy level.
+     * Constructs a new {@code EnergyDisplay}.
+     *
+     * @param topLeftCorner the top-left position of the display on the screen
+     * @param dimensions the size of the display area
+     * @param energySupplier a supplier providing the current energy value
      */
     public EnergyDisplay(Vector2 topLeftCorner,
                          Vector2 dimensions,
@@ -46,8 +52,12 @@ public class EnergyDisplay extends GameObject {
     }
 
     /**
-     * Updates the display text and color whenever the energy level changes.
-     * @param deltaTime The time elapsed since the last update.
+     * Updates the energy display each frame.
+     * <p>
+     * The displayed text and color are updated only if the energy value
+     * has changed since the last frame, in order to improve performance.
+     *
+     * @param deltaTime time elapsed since the last update
      */
     @Override
     public void update(float deltaTime) {
@@ -64,7 +74,9 @@ public class EnergyDisplay extends GameObject {
     }
 
     /**
-     * Updates the string representation of the energy.
+     * Updates the textual representation of the energy value.
+     *
+     * @param energy the current energy value
      */
     private void updateDisplayText(float energy) {
         textRenderable.setString(String.format(ENERGY_FORMAT, energy));

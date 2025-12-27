@@ -11,15 +11,24 @@ import java.awt.Color;
 import java.util.Random;
 
 /**
- * Leaf is responsible for:
- * - choosing its own (green) color + noise
- * - running its own wind animation (angle + size)
- *
- * IMPORTANT: The 4-color palette is NOT here (those are FRUIT colors).
+ * Represents a single leaf in the tree canopy.
+ * <p>
+ * Each leaf is responsible for:
+ * <ul>
+ *   <li>Choosing its own green color with slight RGB noise</li>
+ *   <li>Running a wind animation (rotation and size scaling)</li>
+ * </ul>
+ * The leaf's appearance and animation are deterministic based on its position,
+ * ensuring visual consistency between runs.
+ * <p>
+ * <b>Note:</b> The color palette here is exclusively green and is unrelated
+ * to the fruit color palette.
  */
 public class Leaf extends GameObject {
 
     private final Random random;
+    private static final long RANDOM_SEED_X_MULTIPLIER = 73L;
+    private static final long RANDOM_SEED_Y_MULTIPLIER = 37L;
 
     // ---- Leaf color (green) ----
     private static final Color LEAF_BASE_COLOR = new Color(50, 200, 30);
@@ -43,10 +52,17 @@ public class Leaf extends GameObject {
     private static final float LEAF_SIZE_DUR_MIN = 1.2f;
     private static final float LEAF_SIZE_DUR_RANGE = 2.0f;
 
+    /**
+     * Constructs a new {@code Leaf} object.
+     *
+     * @param topLeft the top-left position of the leaf
+     * @param size the dimensions of the leaf
+     */
     public Leaf(Vector2 topLeft, Vector2 size) {
         super(topLeft, size, null);
-        // TODO change numbers to constant variables
-        this.random = new Random((long)topLeft.x() * 73 + (long)topLeft.y() * 37);
+        long seed = (long) topLeft.x() * RANDOM_SEED_X_MULTIPLIER
+                + (long) topLeft.y() * RANDOM_SEED_Y_MULTIPLIER;
+        this.random = new Random(seed);
         renderer().setRenderable(new RectangleRenderable(addRgbNoise(LEAF_BASE_COLOR, LEAF_COLOR_NOISE)));
         animate(size);
     }

@@ -1,0 +1,74 @@
+saar.boniel,rivka.bloch
+324274125,213424245
+
+Avatar Implementation:
+    Classes and Packages Structure:
+    The Avatar implementation is organized within the pepse.world.avatar package and consists of two main classes:
+    1. Avatar - The main player-controlled character class that extends GameObject. This class handles all avatar logic including movement, jumping, collision detection, energy management, and animation state changes.
+    2. EnergyDisplay - A UI component that displays the avatar's current energy level on screen. It observes the avatar's energy through a Supplier<Float> interface and updates its visual representation accordingly.
+    The relationship between these classes follows an observer pattern: the Avatar provides energy data through a getter method (getEnergy()), while EnergyDisplay observes this data using a supplier function reference passed during construction.
+
+    State Changes Design:
+    The avatar's state management is implemented using an internal State enum with three possible values: IDLE, RUNNING, and JUMPING.
+    The state transition logic is centralized in the updateState() method, which is called every frame:
+    * JUMPING state: Activated when vertical velocity magnitude exceeds 1 pixel/second
+    * RUNNING state: Activated when horizontal velocity magnitude exceeds 1 pixel/second (and not jumping)
+    * IDLE state: Default state when the avatar is stationary on the ground
+    Each state has a corresponding AnimationRenderable (standing, running, jumping animations). When a state change is detected, the appropriate animation is set via renderer().setRenderable(). Horizontal flipping is also handled during state updates to ensure the avatar faces the direction of movement.
+
+    Energy Update Logic:
+    The energy is updated in the update() method through several helper methods:
+    * handleHorizontalMovement(): Deducts energy when running on ground
+    * handleJump(): Deducts energy for jumps (prevents jumping if insufficient energy)
+    * handleEnergyRecovery(): Restores energy when stationary on ground
+    * onCollisionEnter(): Adds bonus energy when collecting fruit
+
+    Energy Display Update:
+    The EnergyDisplay class uses a supplier pattern to observe energy changes.
+    In its update() method, it checks the current energy value and updates the displayed text and color only when the value changes.
+    The display shows the energy as a percentage and turns red when energy drops below 20%.
+    The display is rendered in CAMERA_COORDINATES to remain fixed on screen regardless of world movement.
+
+
+Trees Package Implementation:
+    The trees package (pepse.world.trees) contains three main classes that work together to create dynamic, animated vegetation:
+    1. Tree - The main tree class that generates and manages all tree components.
+    Each tree consists of:
+    * A trunk (rectangular GameObject with immovable physics)
+    * A canopy of leaves (Leaf objects arranged in a grid)
+    * Fruits (Fruit objects scattered among the leaves)
+    Tree generation is deterministic based on position using seeded random generation.
+    The trunk dimensions and canopy size vary randomly within defined ranges.
+
+    2. Leaf - Represents individual leaf in the tree canopy.
+    Each leaf:
+    Has a green base color with slight RGB noise variation for visual diversity
+    Runs continuous wind animations using Transition components (rotation and size scaling)
+    Uses deterministic randomization based on its position to ensure consistent appearance between runs
+    The animation parameters (angle range, duration, scale factors) are randomized per leaf with a small delay to create natural, asynchronous movement across the canopy.
+
+    3. Fruit.java - Represents collectible fruits that:
+    Render as colored circles using one of four predefined colors (red, yellow, orange, purple)
+    Disappear temporarily when collected by the avatar
+    Respawn after a fixed duration (30 seconds, matching the day cycle)
+    Use deterministic color selection based on position
+
+    Relationships:
+    * Tree creates and owns lists of Leaf and Fruit objects.
+    * Flora (in world package) generates Tree objects with appropriate spacing and positioning.
+    * Avatar detects collision with Fruit objects and triggers the disappear/respawn cycle.
+    All three classes use position-based seeded randomization to ensure deterministic generation
+
+Additional Packages and Classes:
+    BiListDeque (Root Package):
+    A custom data structure that implements a double-ended deque using two ArrayLists.
+    This structure efficiently supports:
+    * Negative and positive indices
+    * Fast addition at both ends
+    * Efficient chunk management for infinite terrain generation
+    The left ArrayList stores elements with negative indices in reversed order, while the right ArrayList stores non-negative indices normally.
+    This design enables efficient terrain chunking in PepseGameManager.
+
+    Chunk (world Package):
+    A container class grouping terrain blocks and trees belonging to a specific world region.
+    Used by the chunk management system for efficient loading/unloading.

@@ -20,6 +20,12 @@ import java.util.ArrayList;
 import pepse.world.trees.Fruit;
 import pepse.world.trees.Tree;
 
+/**
+ * Manages the Pepse game world:
+ * - Initializes terrain, flora, sky, day/night cycle, and avatar
+ * - Dynamically loads and unloads chunks as the avatar moves
+ * - Handles UI elements such as the energy display
+ */
 public class PepseGameManager extends GameManager {
 
     private static final int SKY_LAYER = Layer.BACKGROUND;
@@ -28,7 +34,7 @@ public class PepseGameManager extends GameManager {
     private static final int DEEP_GROUND_LAYER = Layer.BACKGROUND + 10;
     private static final int UI_LAYER = Layer.UI;
 
-    private static final String GROUND_SURFACE_TAG = "top_block";
+    private static final String SURFACE_TAG = "surface";
     private static final float DAY_CYCLE_LENGTH = 30f;
     private static final float SUN_CYCLE_LENGTH = 60f;
     private static final int TERRAIN_SEED = 30;
@@ -36,7 +42,7 @@ public class PepseGameManager extends GameManager {
     private static final float AVATAR_SIZE = 50f;
     private static final Vector2 ENERGY_DISPLAY_POS = new Vector2(5, 5);
     private static final Vector2 ENERGY_DISPLAY_SIZE = new Vector2(20, 20);
-    public static final int FIRST_CHUNKS = 3;
+    private static final int FIRST_CHUNKS = 3;
 
     private Avatar avatar;
     private Terrain terrain_generator;
@@ -45,10 +51,24 @@ public class PepseGameManager extends GameManager {
     private int current_chunk;
     private Vector2 windowDimensions;
 
+
+    /**
+     * Entry point for the Pepse game.
+     *
+     * @param args command line arguments (unused)
+     */
     public static void main(String[] args) {
         new PepseGameManager().run();
     }
 
+    /**
+     * Initializes the game world: sky, day/night cycle, terrain, flora, avatar, and UI.
+     *
+     * @param imageReader Image reader utility.
+     * @param soundReader Sound reader utility.
+     * @param inputListener User input listener.
+     * @param windowController Window controller.
+     */
     @Override
     public void initializeGame(ImageReader imageReader,
                                SoundReader soundReader,
@@ -65,6 +85,11 @@ public class PepseGameManager extends GameManager {
         createUI();
     }
 
+    /**
+     * Updates the game state each frame.
+     *
+     * @param delta Time elapsed since last update in seconds.
+     */
     @Override
     public void update(float delta) {
         super.update(delta);
@@ -102,7 +127,7 @@ public class PepseGameManager extends GameManager {
 
     private void disableChunk(Chunk chunk) {
         for (Block block : chunk.getBlocks()) {
-            if (GROUND_SURFACE_TAG.equals(block.getTag())) {
+            if (SURFACE_TAG.equals(block.getTag())) {
                 gameObjects().removeGameObject(block, Layer.STATIC_OBJECTS);
             } else {
                 gameObjects().removeGameObject(block, DEEP_GROUND_LAYER);
@@ -126,7 +151,7 @@ public class PepseGameManager extends GameManager {
         for (Block block : chunk.getBlocks()) {
             // NOTE: for avatar stability, it's OK if deep blocks don't collide,
             // but surface blocks MUST collide & be in a collidable layer.
-            if (GROUND_SURFACE_TAG.equals(block.getTag())) {
+            if (SURFACE_TAG.equals(block.getTag())) {
                 gameObjects().addGameObject(block, Layer.STATIC_OBJECTS);
             } else {
                 gameObjects().addGameObject(block, DEEP_GROUND_LAYER);
