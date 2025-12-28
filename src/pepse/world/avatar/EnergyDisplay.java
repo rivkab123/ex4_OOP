@@ -19,10 +19,13 @@ import java.util.function.Supplier;
 public class EnergyDisplay extends GameObject {
 
     // --- Constants ---
-    private static final String ENERGY_FORMAT = "%.0f%%";
+    private static final String ENERGY_FORMAT = "energy: %.0f%%";
+    private static final String INITIAL_ENERGY_TEXT = "energy: 100%";
+    private static final float INITIAL_ENERGY_VALUE = 100f;
     private static final float CRITICAL_ENERGY_THRESHOLD = 20f;
     private static final Color NORMAL_COLOR = Color.BLACK;
     private static final Color CRITICAL_COLOR = Color.RED;
+    private static final float TEXT_SIZE_MULTIPLIER = 2f;
 
     // --- Members ---
     private final TextRenderable textRenderable;
@@ -41,11 +44,11 @@ public class EnergyDisplay extends GameObject {
                          Supplier<Float> energySupplier) {
 
         // Initialize with default percentage
-        super(topLeftCorner, dimensions, new TextRenderable("100%"));
+        super(topLeftCorner, dimensions, new TextRenderable(INITIAL_ENERGY_TEXT));
 
         this.textRenderable = (TextRenderable) this.renderer().getRenderable();
         this.energySupplier = energySupplier;
-        this.lastEnergy = 100f;
+        this.lastEnergy = INITIAL_ENERGY_VALUE;
 
         // Ensure the UI stays fixed on the screen regardless of camera movement
         this.setCoordinateSpace(CoordinateSpace.CAMERA_COORDINATES);

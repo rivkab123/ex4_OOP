@@ -18,6 +18,8 @@ public class BiListDeque<T> {
     // right is normal: right.get(0) == index 0, right.get(1) == index 1 ...
     private final ArrayList<T> right = new ArrayList<>();
 
+    private static final int NEGATIVE_INDEX_OFFSET = 1;
+
     /** Constructs an empty deque */
     public BiListDeque() {}
 
@@ -51,7 +53,7 @@ public class BiListDeque<T> {
         if (index >= 0) {
             return right.get(index);
         } else {
-            int k = -index - 1; // -1 -> 0, -2 -> 1, ...
+            int k = -index - NEGATIVE_INDEX_OFFSET; // -1 -> 0, -2 -> 1, ...
             return left.get(k);
         }
     }

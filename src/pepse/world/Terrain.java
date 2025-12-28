@@ -58,8 +58,6 @@ public class Terrain {
      * @return a list of blocks forming the terrain in the given range
      */
     public ArrayList<Block> createInRange(int minX, int maxX) {
-        RectangleRenderable rectangleRenderable =
-                new RectangleRenderable(ColorSupplier.approximateColor(BASE_GROUND_COLOR));
 
         ArrayList<Block> blocks = new ArrayList<>();
 
@@ -70,6 +68,10 @@ public class Terrain {
             int yStart = (int) (Math.floor(groundHeightAt(x) / Block.SIZE) * Block.SIZE);
 
             for (int y = yStart; y < yEnd; y += Block.SIZE) {
+
+                RectangleRenderable rectangleRenderable =
+                        new RectangleRenderable(ColorSupplier.approximateColor(BASE_GROUND_COLOR));
+
                 Block block = new Block(new Vector2(x, y), rectangleRenderable);
                 if (y == yStart) block.setTag(GROUND_SURFACE_TAG);
                 blocks.add(block);
@@ -77,6 +79,5 @@ public class Terrain {
         }
         return blocks;
     }
-
 
 }

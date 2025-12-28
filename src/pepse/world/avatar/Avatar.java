@@ -65,6 +65,10 @@ public class Avatar extends GameObject {
     private boolean onGround;
     private int groundContacts = 0; // robust vs corners / seams
 
+    // --- Collision / State Thresholds ---
+    private static final float STATE_VELOCITY_EPS = 1f;
+    private static final float GROUND_NORMAL_THRESHOLD = -0.5f;
+
     /**
      * Enum representing the possible movement states of the avatar.
      */
@@ -84,9 +88,23 @@ public class Avatar extends GameObject {
         super(topLeftCorner, AVATAR_DIMENSIONS,
                 new AnimationRenderable(STANDING_IMGS, imageReader, false, FRAME_DURATION));
 
-        this.standingAnimation = new AnimationRenderable(STANDING_IMGS, imageReader, false, FRAME_DURATION);
-        this.runningAnimation = new AnimationRenderable(RUNNING_IMGS, imageReader, false, FRAME_DURATION);
-        this.jumpingAnimation = new AnimationRenderable(JUMPING_IMGS, imageReader, false, FRAME_DURATION);
+        this.standingAnimation = new AnimationRenderable(
+                STANDING_IMGS,
+                imageReader,
+                false,
+                FRAME_DURATION);
+
+        this.runningAnimation = new AnimationRenderable(
+                RUNNING_IMGS,
+                imageReader,
+                false,
+                FRAME_DURATION);
+
+        this.jumpingAnimation = new AnimationRenderable(
+                JUMPING_IMGS,
+                imageReader,
+                false,
+                FRAME_DURATION);
 
         this.curruntState = State.IDLE;
         this.energy = MAX_ENERGY;
@@ -178,7 +196,7 @@ public class Avatar extends GameObject {
     private boolean isLandingOnGround(Collision collision) {
         // In DanOGL, when standing on something, the collision normal should point upward on us:
         // i.e., normal.y() is negative (pushing the avatar up).
-        return collision.getNormal().y() < -0.5f;
+        return collision.getNormal().y() < GROUND_NORMAL_THRESHOLD;
     }
 
     /**
@@ -216,7 +234,7 @@ public class Avatar extends GameObject {
                 energy -= ENERGY_LOSS_JUMP;
                 onGround = false;
                 groundContacts = 0; // leaving ground intentionally
-            } else if (!onGround && energy >= ENERGY_LOSS_AIR_JUMP) {
+            } else if (!onGround && energy >= ENERGY_LOSS_AIR_JUMP && getVelocity().y() > 0) {
                 transform().setVelocityY(VELOCITY_Y);
                 energy -= ENERGY_LOSS_AIR_JUMP;
             }
@@ -239,9 +257,9 @@ public class Avatar extends GameObject {
         State newState;
 
         // Determine State
-        if (Math.abs(getVelocity().y()) > 1f) {
+        if (Math.abs(getVelocity().y()) > STATE_VELOCITY_EPS) {
             newState = State.JUMPING;
-        } else if (Math.abs(xVel) > 1f) {
+        } else if (Math.abs(xVel) > STATE_VELOCITY_EPS) {
             newState = State.RUNNING;
         } else {
             newState = State.IDLE;

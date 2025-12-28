@@ -51,7 +51,6 @@ public class Fruit extends GameObject {
     }
 
 
-
     /**
      * Makes the fruit disappear after being collected.
      * <p>

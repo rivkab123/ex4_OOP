@@ -30,6 +30,7 @@ public class Tree {
     private final Random random;
     private static final long RANDOM_SEED_X_MULTIPLIER = 31L;
     private static final long RANDOM_SEED_Y_MULTIPLIER = 1L;
+    private static final int INCLUSIVE_RANGE_OFFSET = 1;
 
     // ---- Trunk constraints (pixels) ----
     private static final int TRUNK_MIN_HEIGHT = 150;
@@ -117,7 +118,9 @@ public class Tree {
         Vector2 trunkTopCenter = trunkTopLeft.add(new Vector2(trunkDim.x() * HALF_FACTOR, 0f));
 
         int canopySize = 2 * canopyHalfSizePx;
-        Vector2 canopyTopLeft = trunkTopCenter.subtract(new Vector2(canopySize * HALF_FACTOR, canopySize * HALF_FACTOR));
+        Vector2 canopyTopLeft = trunkTopCenter.subtract(new Vector2(
+                canopySize * HALF_FACTOR,
+                canopySize * HALF_FACTOR));
 
         int cols = canopySize / LEAF_SIZE;
         int rows = canopySize / LEAF_SIZE;
@@ -147,6 +150,6 @@ public class Tree {
 
     // inclusive
     private int randInt(int min, int max) {
-        return min + random.nextInt(max - min + 1);
+        return min + random.nextInt(max - min + INCLUSIVE_RANGE_OFFSET);
     }
 }

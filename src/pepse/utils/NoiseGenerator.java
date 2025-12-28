@@ -58,10 +58,13 @@ public class NoiseGenerator {
     }
 
     /**
-     * Noise is responsible to generate pseudo random noise according to the seed given upon constructing the object.
+     * Noise is responsible to generate pseudo random noise according to the seed given upon constructing
+     * the object.
      *
-     * @param x the wanted x to receive noise for (in our case, the x coordinate of the terrain you'd want to create).
-     * @param factor describes how large the noise should be (play with it, but BLOCK_SIZE *7 should be enough).
+     * @param x the wanted x to receive noise for (in our case, the x coordinate of the terrain you'd want
+     *          to create).
+     * @param factor describes how large the noise should be (play with it, but BLOCK_SIZE *7 should be
+     *               enough).
      * @return returns a noise you should *add* to the groundHeightAtX0 you have.
      *
      * example:

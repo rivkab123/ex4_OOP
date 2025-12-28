@@ -21,10 +21,14 @@ public class Sun {
 
     // --- Constants ---
     private static final float SUN_HEIGHT_RATIO = 0.2f;
+    private static final float SUN_X_LOCATION_RATIO = 2f;
     private static final float SUN_INITIAL_Y_RATIO  = 2f / 3f;
     private static final float SUN_INITIAL_X_RATIO = 0.5f;
+    private static final float SUN_SIZE_RATIO = 0.15f;
+    private static final float HALF_RATIO = 0.5f;
     private static final float FULL_CIRCLE_DEGREES = 360f;
     private static final float INITIAL_DEGREES = 0f;
+    private static final String SUN_TAG = "sun";
 
     /**
      * Creates and returns a sun game object.
@@ -41,20 +45,21 @@ public class Sun {
 
         OvalRenderable renderable = new OvalRenderable(Color.YELLOW);
 
-        float sunSize = windowDimensions.y() * 0.15f;
+        float sunSize = windowDimensions.y() * SUN_SIZE_RATIO;
         Vector2 sunDimensions = new Vector2(sunSize, sunSize);
 
-        Vector2 initialSunCenter = new Vector2(windowDimensions.x() / 2, windowDimensions.y() * SUN_HEIGHT_RATIO);
+        Vector2 initialSunCenter = new Vector2(
+                windowDimensions.x() / SUN_X_LOCATION_RATIO,
+                windowDimensions.y() * SUN_HEIGHT_RATIO);
 
         GameObject sun = new GameObject(
-                initialSunCenter.subtract(sunDimensions.mult(0.5f)),
+                initialSunCenter.subtract(sunDimensions.mult(HALF_RATIO)),
                 sunDimensions,
                 renderable);
 
         sun.setCoordinateSpace(CoordinateSpace.CAMERA_COORDINATES);
-        sun.setTag("sun");
+        sun.setTag(SUN_TAG);
 
-        // TODO use constant in terrain?
         float cycleCenterY = windowDimensions.y() * SUN_INITIAL_Y_RATIO;
         float cycleCenterX = windowDimensions.x() * SUN_INITIAL_X_RATIO;
         Vector2 cycleCenter = new Vector2(cycleCenterX, cycleCenterY);

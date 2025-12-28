@@ -29,6 +29,7 @@ public class Leaf extends GameObject {
     private final Random random;
     private static final long RANDOM_SEED_X_MULTIPLIER = 73L;
     private static final long RANDOM_SEED_Y_MULTIPLIER = 37L;
+    private static final int INCLUSIVE_RANGE_OFFSET = 1;
 
     // ---- Leaf color (green) ----
     private static final Color LEAF_BASE_COLOR = new Color(50, 200, 30);
@@ -113,6 +114,6 @@ public class Leaf extends GameObject {
 
     // inclusive
     private int randInt(int min, int max) {
-        return min + random.nextInt(max - min + 1);
+        return min + random.nextInt(max - min + INCLUSIVE_RANGE_OFFSET);
     }
 }

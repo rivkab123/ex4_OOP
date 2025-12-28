@@ -28,6 +28,10 @@ import pepse.world.trees.Tree;
  */
 public class PepseGameManager extends GameManager {
 
+    private static final int INITIAL_LEFT_CHUNK_OFFSET = 1;
+    private static final int FAR_CHUNK_DISTANCE = 2;
+    private static final float HALF_FACTOR = 0.5f;
+
     private static final int SKY_LAYER = Layer.BACKGROUND;
     private static final int SUN_LAYER = Layer.BACKGROUND + 1;
     private static final int SUN_HALO_LAYER = Layer.BACKGROUND + 2;
@@ -106,14 +110,14 @@ public class PepseGameManager extends GameManager {
         int dir = Integer.compare(chunkId, current_chunk); // +1 right, -1 left
 
         int toEnable = chunkId + dir;        // new forward neighbor
-        int toDisable = chunkId - 2 * dir;   // old far neighbor behind
+        int toDisable = chunkId - FAR_CHUNK_DISTANCE * dir;   // old far neighbor behind
 
         // Enable/create forward neighbor
         if (chunks.isValidIndex(toEnable)) {
             enableChunk(chunks.get(toEnable));
         } else {
             int minX = toEnable * W;
-            int maxX = (toEnable + 1) * W;
+            int maxX = (toEnable + INITIAL_LEFT_CHUNK_OFFSET) * W;
             createChunkIn(minX, maxX);
         }
 
@@ -220,16 +224,18 @@ public class PepseGameManager extends GameManager {
     }
 
     private void createAvatar(ImageReader imageReader, UserInputListener inputListener) {
-        float avatarX = windowDimensions.x() / 2;
-        float groundY = (float) (Math.floor(terrain_generator.groundHeightAt(avatarX) / Block.SIZE) * Block.SIZE);
+        float avatarX = windowDimensions.x() / FAR_CHUNK_DISTANCE;
+        float groundY = (float) (
+                Math.floor(terrain_generator.groundHeightAt(avatarX) / Block.SIZE) * Block.SIZE);
         float avatarY = groundY - AVATAR_SIZE;
 
         Vector2 avatarInitialPos = new Vector2(avatarX, avatarY);
         avatar = new Avatar(avatarInitialPos, inputListener, imageReader);
         gameObjects().addGameObject(avatar, Layer.DEFAULT);
 
-        Vector2 avatarCenter = avatarInitialPos.add(new Vector2(AVATAR_SIZE, AVATAR_SIZE).mult(0.5f));
-        Vector2 offset = windowDimensions.mult(0.5f).subtract(avatarCenter);
+        Vector2 avatarCenter = avatarInitialPos.add(
+                new Vector2(AVATAR_SIZE, AVATAR_SIZE).mult(HALF_FACTOR));
+        Vector2 offset = windowDimensions.mult(HALF_FACTOR).subtract(avatarCenter);
 
         setCamera(new Camera(avatar, offset, windowDimensions, windowDimensions));
     }

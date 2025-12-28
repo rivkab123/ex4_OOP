@@ -18,6 +18,7 @@ public final class ColorSupplier {
      * @return A color similar to baseColor.
      */
     public static Color approximateColor(Color baseColor) {
+
         return approximateColor(baseColor, DEFAULT_COLOR_DELTA);
     }
 
